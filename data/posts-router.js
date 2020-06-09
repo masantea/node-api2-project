@@ -1,5 +1,5 @@
 const express = require("express")
-
+const posts = require("./db.js")
 const router = express.Router()
 
 
@@ -10,11 +10,11 @@ router.get("/", (req, res) => {
 })
 
 router.post("/posts", (req, res) => {
-	// if (!req.body.name || !req.body.email) {
-	// 	return res.status(400).json({
-	// 		message: "Missing user name or email",
-	// 	})
-	// }
+	if (!req.body.title || !req.body.contents) {
+		return res.status(400).json({
+			errorMessage: "Please provide title and contents for the post.",
+		})
+	}
 
 	posts.insert(req.body)
 		.then((post) => {
@@ -23,17 +23,36 @@ router.post("/posts", (req, res) => {
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error adding the user",
+        error: "There was an error while saving the post to the database",
 			})
 		})
 })
 
 router.post("/posts/:id/comments", (req, res) => {
-	// if (!req.body.name || !req.body.email) {
-	// 	return res.status(400).json({
-	// 		message: "Missing user name or email",
-	// 	})
-	// }
+	if (!req.body.text) {
+		return res.status(400).json({
+      errorMessage: "Please provide text for the comment." ,
+		})
+  }
+  posts.findById(req.params.id)
+  .then((post) => {
+    if (post) {
+      res.status(200).json(post)
+    } else {
+      res.status(404).json({
+        message: "The post with the specified ID does not exist.",
+      })
+    }
+  })
+  // .then((post) => {
+  //   if (post) {
+  //     res.status(404).json({
+  //       message: "The post with the specified ID does not exist.",
+  //     })
+  //   } else {
+  //     return posts.findPostComments(req.params.id)
+  //   }
+  // })
 
 	posts.insertComment(req.body)
 		.then((comment) => {
@@ -42,7 +61,7 @@ router.post("/posts/:id/comments", (req, res) => {
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error adding the user",
+				error: "There was an error while saving the comment to the database",
 			})
 		})
 })
@@ -56,7 +75,7 @@ router.get("/posts", (req, res) => {
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error retrieving the users",
+				error: "The posts information could not be retrieved.",
 			})
 		})
 })
@@ -68,14 +87,14 @@ router.get("/posts/:id", (req, res) => {
 				res.status(200).json(post)
 			} else {
 				res.status(404).json({
-					message: "User not found",
+					message: "The post with the specified ID does not exist.",
 				})
 			}
 		})
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error retrieving the user",
+        error: "The post information could not be retrieved.",
 			})
 		})
 })
@@ -84,14 +103,10 @@ router.get("/posts/:id/comments", (req, res) => {
 	posts.findById(req.params.id)
 		.then((post) => {
 			if (!post) {
-				// cancelling a request is tricky from inside a promise chain,
-				// so instead we're using an if/else statement.
 				res.status(404).json({
-					message: "User not found",
+          message: "The post with the specified ID does not exist.",
 				})
 			} else {
-				// this is returning a new promise in the chain, so we get
-				// the result in the next `.then` call.
 				return posts.findPostComments(req.params.id)
 			}
 
@@ -102,7 +117,7 @@ router.get("/posts/:id/comments", (req, res) => {
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error getting the user",
+				error: "The comments information could not be retrieved.",
 			})
 		})
 })
@@ -112,44 +127,44 @@ router.delete("/posts/:id", (req, res) => {
 	posts.remove(req.params.id)
 		.then((count) => {
 			if (count > 0) {
-				res.status(post).json({
-					message: "The user has been nuked",
+				res.status(200).json({
+					message: "The post has been removed",
 				})
 			} else {
 				res.status(404).json({
-					message: "The user could not be found",
+					message: "The post with the specified ID does not exist." ,
 				})
 			}
 		})
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error removing the user",
+				error: "The post could not be removed",
 			})
 		})
 })
 
 router.put("/posts/:id", (req, res) => {
-	// if (!req.body.name || !req.body.email) {
-	// 	return res.status(400).json({
-	// 		message: "Missing user name or email",
-	// 	})
-	// }
+	if (!req.body.title || !req.body.contents) {
+		return res.status(400).json({
+			errorMessage: "Please provide title and contents for the post.",
+		})
+	}
 
 	posts.update(req.params.id, req.body)
 		.then((post) => {
 			if (post) {
-				res.status(200).json(user)
+				res.status(200).json(post)
 			} else {
 				res.status(404).json({
-					message: "The user could not be found",
+          message: "The post with the specified ID does not exist.",
 				})
 			}
 		})
 		.catch((error) => {
 			console.log(error)
 			res.status(500).json({
-				message: "Error updating the user",
+        error: "The post information could not be modified.",
 			})
 		})
 })
